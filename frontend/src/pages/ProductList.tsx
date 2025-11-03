@@ -4,11 +4,33 @@ import { Link } from 'react-router-dom'
 import { getProducts } from '../api/requests'
 import type { Product } from '../api/requests'
 import { motion } from 'framer-motion'
+import ImageWithFallback from '../components/ui/ImageWithFallback'
 
 const ProductList: React.FC = () => {
   const { data, isLoading, error } = useQuery<Product[], Error>({ queryKey: ['products'], queryFn: getProducts })
-  if (isLoading) return <div>Loading...</div>
-  if (error) return <div>Error loading products</div>
+  if (isLoading) return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 product-grid-tight">
+      {[...Array(6)].map((_, i) => (
+        <div key={i} className="product-card-custom animate-pulse">
+          <div className="w-full h-56 bg-gray-200 dark:bg-gray-700" />
+          <div className="p-4 space-y-3">
+            <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
+            <div className="flex justify-between">
+              <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/4" />
+              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-20" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+
+  if (error) return (
+    <div className="text-center py-12">
+      <p className="text-red-500">Failed to load products. Please try again later.</p>
+    </div>
+  )
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
@@ -18,7 +40,13 @@ const ProductList: React.FC = () => {
         {data?.map((p: Product) => (
           <motion.div whileHover={{ y: -6 }} key={p._id} className="product-card-custom">
             <Link to={`/product/${p._id}`} className="block">
-              <img src={p.images && p.images.length ? p.images[0] : 'https://placehold.co/600x400?text=No+Image'} alt={p.name} className="product-card-img" />
+              <div className="product-card-img-container">
+                <ImageWithFallback
+                  src={p.images && p.images.length ? p.images[0] : ''}
+                  alt={p.name}
+                  className="product-card-img"
+                />
+              </div>
               <div className="p-4">
                 <h3 className="text-lg font-semibold text-tpred">{p.name}</h3>
                 <p className="text-sm text-gray-500 mt-1">{p.description}</p>

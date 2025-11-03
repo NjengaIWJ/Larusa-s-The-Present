@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import useCart from '../stores/useCart'
 import { createOrder } from '../api/requests'
 import { useNavigate } from 'react-router-dom'
+import { useToast } from '../stores/useToast'
 
 const Cart: React.FC = () => {
   const items = useCart(s => s.items)
@@ -9,6 +10,7 @@ const Cart: React.FC = () => {
   const clear = useCart(s => s.clear)
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
+  const showToast = useToast(s => s.showToast)
 
   const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0)
 
@@ -18,12 +20,13 @@ const Cart: React.FC = () => {
       const payload = { items: items.map(i => ({ product: i.productId, quantity: i.quantity, price: i.price })), total }
       await createOrder(payload.items)
       clear()
+      showToast('Order placed — thank you!', 'success')
       navigate('/orders')
     } catch (err: unknown) {
       if (err instanceof Error) {
-        alert(`Checkout failed: ${err.message}`)
+        showToast(`Checkout failed: ${err.message}`, 'error')
       } else {
-        alert('Checkout failed: Unknown error')
+        showToast('Checkout failed: Unknown error', 'error')
       }
     } finally {
       setLoading(false)

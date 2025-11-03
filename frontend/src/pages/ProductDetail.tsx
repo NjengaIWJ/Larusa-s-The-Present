@@ -4,12 +4,16 @@ import { useQuery } from '@tanstack/react-query'
 import { getProduct } from '../api/requests'
 import type { Product } from '../api/requests'
 import useCart from '../stores/useCart'
+import { useToast } from '../stores/useToast'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams()
   const { data, isLoading } = useQuery<Product | null, Error>({ queryKey: ['product', id], queryFn: () => getProduct(id as string) })
   const add = useCart(s => s.add)
+  const showToast = useToast(s => s.showToast)
+  const [added, setAdded] = useState(false)
 
   if (isLoading) return <div>Loading...</div>
   if (!data) return <div>Not found</div>
@@ -23,7 +27,18 @@ const ProductDetail: React.FC = () => {
         <p className="text-gray-500 mt-2">{p.description}</p>
         <div className="mt-4 flex items-center gap-4">
           <div className="text-xl font-extrabold text-tpgold">${p.price.toFixed(2)}</div>
-          <button className="btn-cta" onClick={() => add({ productId: p._id, name: p.name, price: p.price, quantity: 1 })}>Add to cart</button>
+          <button
+            className="btn-cta"
+            onClick={() => {
+              add({ productId: p._id, name: p.name, price: p.price, quantity: 1 })
+              showToast('Added to cart', 'success')
+              setAdded(true)
+              setTimeout(() => setAdded(false), 1200)
+            }}
+            aria-pressed={added}
+          >
+            {added ? 'Added ✓' : 'Add to cart'}
+          </button>
         </div>
       </div>
     </motion.div>

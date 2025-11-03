@@ -108,7 +108,7 @@ export const createOrder = async (items: OrderItem[]): Promise<Order> => {
 }
 
 export const getOrders = async (): Promise<Order[]> => {
-  const res = await api.get('/orders')
+  const res = await api.get('/orders/my-orders')
   return res.data
 }
 

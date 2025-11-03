@@ -28,7 +28,10 @@ export const validateProductData = (req: Request, res: Response, next: NextFunct
 };
 
 export const validateFileUpload = (req: Request, res: Response, next: NextFunction) => {
-  if (!req.file) {
+  const files = (req as any).files as Express.Multer.File[] | undefined;
+  const single = (req as any).file as Express.Multer.File | undefined;
+
+  if ((!files || !files.length) && !single) {
     return res.status(400).json({ 
       message: 'No file uploaded',
       errors: { file: 'Image file is required' }
@@ -36,19 +39,18 @@ export const validateFileUpload = (req: Request, res: Response, next: NextFuncti
   }
 
   const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/jpg'];
-  if (!allowedTypes.includes(req.file.mimetype)) {
-    return res.status(400).json({ 
-      message: 'Invalid file type',
-      errors: { file: 'Only JPG, PNG and GIF images are allowed' }
-    });
+  const maxSize = 5 * 1024 * 1024; // 5MB
+
+  const checkFile = (f: Express.Multer.File) => {
+    if (!allowedTypes.includes(f.mimetype)) return 'Only JPG, PNG and GIF images are allowed';
+    if (f.size > maxSize) return 'File size must be less than 5MB';
+    return null;
   }
 
-  const maxSize = 5 * 1024 * 1024; // 5MB
-  if (req.file.size > maxSize) {
-    return res.status(400).json({ 
-      message: 'File too large',
-      errors: { file: 'File size must be less than 5MB' }
-    });
+  const allFiles = files && files.length ? files : (single ? [single] : []);
+  for (const f of allFiles) {
+    const err = checkFile(f);
+    if (err) return res.status(400).json({ message: 'Invalid file upload', errors: { file: err } });
   }
 
   next();

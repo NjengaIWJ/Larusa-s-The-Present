@@ -2,6 +2,8 @@
 import React, { useEffect, useState } from 'react'
 import { Routes, Route, Link, useNavigate } from 'react-router-dom'
 import { LogIn, LogOut, Moon, Package, Settings, ShoppingCart, Sun, User, UserPlus } from 'lucide-react'
+import { motion } from 'framer-motion'
+import useCart from './stores/useCart'
 import ProductList from './pages/ProductList'
 import ProductDetail from './pages/ProductDetail'
 import Login from './pages/Login'
@@ -21,6 +23,8 @@ const App:React.FC=()=> {
   const clearAuth = useAuth(s => s.clearAuth)
   const [theme, setTheme] = useState<'light'|'dark'>(() => (typeof window !== 'undefined' && localStorage.getItem('tp_theme') === 'dark') ? 'dark' : 'light')
   const { message, type, isVisible, hideToast } = useToast()
+  const cartItems = useCart(s => s.items)
+  const cartCount = cartItems.reduce((sum, it) => sum + it.quantity, 0)
 
   useEffect(() => {
     if (theme === 'dark') document.documentElement.classList.add('dark')
@@ -47,8 +51,15 @@ const App:React.FC=()=> {
                 to="/cart" 
                 className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 dark:text-gray-200 dark:hover:text-indigo-400 dark:hover:bg-gray-800 transition-colors"
               >
-                <ShoppingCart className="h-4 w-4" />
-                Cart
+                <motion.span key={cartCount} initial={{ scale: 0.9 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 400, damping: 12 }} className="relative inline-flex items-center">
+                  <ShoppingCart className="h-4 w-4" />
+                  {cartCount > 0 && (
+                    <span className="absolute -top-2 -right-3 inline-flex items-center justify-center px-2 py-0.5 text-xs font-semibold rounded-full bg-red-500 text-white">
+                      {cartCount}
+                    </span>
+                  )}
+                </motion.span>
+                <span className="ml-1">Cart</span>
               </Link>
               <Link 
                 to="/orders" 

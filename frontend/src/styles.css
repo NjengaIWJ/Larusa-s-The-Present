@@ -8,10 +8,22 @@
 	--tp-pink: #f472b6;
 	--tp-gold: #f59e0b;
 	--tp-bg: #fffaf9;
+	--tp-text: #0f172a;
+}
+
+/* dark theme variable overrides */
+.dark {
+  --tp-bg: #071029;
+  --tp-text: #e6eef8;
+  --tp-red: #f43f5e;
+  --tp-pink: #fb7185;
+  --tp-gold: #f59e0b;
 }
 
 .theme-root {
 	min-height: 100vh;
+	background: var(--tp-bg);
+	color: var(--tp-text);
 }
 
 .btn-cta {
@@ -27,10 +39,34 @@
 	padding: 0;
 }
 .product-card-img {
-	@apply w-full h-56 object-cover bg-gray-100;
+	@apply w-full h-full object-cover;
 	transition: transform .18s ease;
 }
 
+.product-card-img-container {
+	@apply relative w-full h-56 overflow-hidden bg-gray-100 dark:bg-gray-900;
+}
+
+/* Loading skeleton animation */
+@keyframes shimmer {
+	0% {
+		background-position: -200% 0;
+	}
+	100% {
+		background-position: 200% 0;
+	}
+}
+
+.animate-shimmer {
+	background: linear-gradient(
+		90deg,
+		rgba(255,255,255,0.03) 25%,
+		rgba(255,255,255,0.08) 37%,
+		rgba(255,255,255,0.03) 63%
+	);
+	background-size: 200% 100%;
+	animation: shimmer 1.4s infinite;
+}
 .product-card-custom:hover .product-card-img { transform: scale(1.02); }
 
 .badge-custom {

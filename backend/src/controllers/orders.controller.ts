@@ -86,16 +86,31 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ message: 'Order must contain at least one item' });
     }
 
+    // Compute total from items (price * quantity) and validate items shape
+    let total = 0;
+    const normalizedItems = items.map((it) => {
+      const quantity = typeof it.quantity === 'number' && it.quantity > 0 ? it.quantity : 1;
+      const price = typeof (it as any).price === 'number' && (it as any).price >= 0 ? (it as any).price : 0;
+      total += price * quantity;
+      return {
+        product: it.product,
+        quantity,
+        price
+      };
+    });
+
     const order = new Order({
       user: req.user._id,
-      items,
+      items: normalizedItems,
+      total,
       status: 'pending'
     });
 
     await order.save();
     
     const populatedOrder = await Order.findById(order._id)
-      .populate('items.product', 'name price imageUrl');
+      .populate('items.product', 'name price imageUrl')
+      .populate('user', 'name email');
 
     logger.info('Order created successfully', { 
       orderId: order._id, 

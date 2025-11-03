@@ -8,7 +8,7 @@ import {
   updateProduct,
   deleteProduct
 } from '../controllers/products.controller';
-import { validateProductData, validateFileUpload } from '../middleware/validation';
+import { validateProductData } from '../middleware/validation';
 
 const router = express.Router();
 
@@ -42,16 +42,15 @@ router.get('/:id', getProductById);
 router.post('/',
   authMiddleware,
   adminOnly,
-  upload.single('image'),
+  upload.array('images', 6),
   validateProductData,
-  validateFileUpload,
   createProduct
 );
 
 router.put('/:id',
   authMiddleware,
   adminOnly,
-  upload.single('image'),
+  upload.array('images', 6),
   validateProductData,
   updateProduct
 );

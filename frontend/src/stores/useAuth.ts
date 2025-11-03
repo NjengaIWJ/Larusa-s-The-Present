@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import useCart from './useCart'
 
 type User = { id: string; name: string; email: string; role: string }
 
@@ -14,7 +15,7 @@ const initialUser = typeof window !== 'undefined' ? (() => {
   try { const raw = localStorage.getItem('tp_user'); return raw ? JSON.parse(raw) : null } catch { return null }
 })() : null
 
-export const useAuth = create<AuthState>((set: any) => ({
+export const useAuth = create<AuthState>((set) => ({
   token: initialToken,
   user: initialUser,
   setAuth: (token: string, user: User) => {
@@ -29,6 +30,8 @@ export const useAuth = create<AuthState>((set: any) => ({
       localStorage.removeItem('tp_token')
       localStorage.removeItem('tp_user')
     }
+    // clear cart on logout so data from previous user is not left in UI
+    try { useCart.getState().clear() } catch (e) { if (e instanceof Error) console.error(e) /* ignore */ }
     set(() => ({ token: null, user: null }))
   }
 }))
