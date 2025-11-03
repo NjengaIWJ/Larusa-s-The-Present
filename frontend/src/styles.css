@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom small helpers and palette variables */
+:root {
+	--tp-red: #e11d48;
+	--tp-pink: #f472b6;
+	--tp-gold: #f59e0b;
+	--tp-bg: #fffaf9;
+}
+
+.theme-root {
+	min-height: 100vh;
+}
+
+.btn-cta {
+	@apply inline-flex items-center gap-2 px-5 py-3 rounded-xl font-semibold shadow-lg text-white bg-gradient-to-r from-tpred via-tppink to-tpgold transform transition-transform duration-150;
+	box-shadow: 0 8px 22px rgba(225,29,72,0.12);
+}
+.btn-cta-gold {
+	@apply inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold shadow-md text-gray-900 bg-tpgold hover:brightness-95;
+}
+
+.product-card-custom {
+	@apply bg-white dark:bg-gray-800 border border-transparent dark:border-gray-700 rounded-2xl overflow-hidden shadow-md;
+	padding: 0;
+}
+.product-card-img {
+	@apply w-full h-56 object-cover bg-gray-100;
+	transition: transform .18s ease;
+}
+
+.product-card-custom:hover .product-card-img { transform: scale(1.02); }
+
+.badge-custom {
+	@apply inline-block px-3 py-1 rounded-full text-white font-semibold bg-gradient-to-r from-tppink to-tpred;
+}
+
+/* Improve spacing for product grid and container */
+.product-grid-tight { gap: 1.25rem }
+
+h2 { margin-bottom: 0.75rem }
+
+@layer utilities {
+	.container-max {
+		max-width: 1000px;
+		margin-left: auto;
+		margin-right: auto;
+		padding: 1rem;
+	}
+}
