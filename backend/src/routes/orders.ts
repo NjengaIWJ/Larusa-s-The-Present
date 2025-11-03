@@ -1,22 +1,25 @@
-import express, { Request, Response } from 'express';
-import Order from '../models/Order';
-import { authMiddleware, AuthRequest } from '../middleware/auth';
+import express from 'express';
+import { authMiddleware, adminOnly } from '../middleware/auth';
+import {
+  getAllOrders,
+  getUserOrders,
+  getOrderById,
+  createOrder,
+  updateOrderStatus
+} from '../controllers/orders.controller';
+import { validateOrderItems, validateOrderStatus } from '../middleware/validation';
 
 const router = express.Router();
 
-// Create order (checkout without payment)
-router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
-  const { items, total } = req.body as { items: any[]; total: number };
-  if (!items || typeof total !== 'number') return res.status(400).json({ message: 'Missing order data' });
-  const order = new Order({ user: req.user!._id, items, total });
-  await order.save();
-  res.json(order);
-});
+// Public routes - none
 
-// Get user's orders
-router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
-  const orders = await Order.find({ user: req.user!._id }).populate('items.product');
-  res.json(orders);
-});
+// Protected customer routes
+router.get('/my-orders', authMiddleware, getUserOrders);
+router.post('/', authMiddleware, validateOrderItems, createOrder);
+
+// Protected admin routes
+router.get('/all', authMiddleware, adminOnly, getAllOrders);
+router.get('/:id', authMiddleware, getOrderById);
+router.patch('/:id/status', authMiddleware, adminOnly, validateOrderStatus, updateOrderStatus);
 
 export default router;

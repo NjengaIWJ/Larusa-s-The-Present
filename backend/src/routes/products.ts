@@ -1,43 +1,65 @@
-import express, { Request, Response } from 'express';
-import Product from '../models/Product';
-import { authMiddleware, adminOnly, AuthRequest } from '../middleware/auth';
+import express from 'express';
+import multer from 'multer';
+import { authMiddleware, adminOnly } from '../middleware/auth';
+import {
+  getAllProducts,
+  getProductById,
+  createProduct,
+  updateProduct,
+  deleteProduct
+} from '../controllers/products.controller';
+import { validateProductData, validateFileUpload } from '../middleware/validation';
 
 const router = express.Router();
 
-// Public: list products
-router.get('/', async (_req: Request, res: Response) => {
-  const products = await Product.find();
-  res.json(products);
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: 'tmp/',
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix);
+  }
 });
 
-// Public: get product
-router.get('/:id', async (req: Request, res: Response) => {
-  const p = await Product.findById(req.params.id);
-  if (!p) return res.status(404).json({ message: 'Not found' });
-  res.json(p);
+const upload = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.match(/^image\/(jpeg|png|jpg|gif)$/)) {
+      return cb(new Error('Only image files are allowed!'));
+    }
+    cb(null, true);
+  },
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  }
 });
 
-// Admin: create product
-router.post('/', authMiddleware, adminOnly, async (req: AuthRequest, res: Response) => {
-  const { name, description, price, images, category } = req.body as {
-    name: string; description?: string; price: number; images?: string[]; category?: string
-  };
-  const product = new Product({ name, description, price, images: images || [], category });
-  await product.save();
-  res.json(product);
-});
+// Public routes (no authentication required)
+router.get('/', getAllProducts);
+router.get('/:id', getProductById);
 
-// Admin: update
-router.put('/:id', authMiddleware, adminOnly, async (req: AuthRequest, res: Response) => {
-  const p = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
-  if (!p) return res.status(404).json({ message: 'Not found' });
-  res.json(p);
-});
+// Protected admin routes
+router.post('/',
+  authMiddleware,
+  adminOnly,
+  upload.single('image'),
+  validateProductData,
+  validateFileUpload,
+  createProduct
+);
 
-// Admin: delete
-router.delete('/:id', authMiddleware, adminOnly, async (_req: AuthRequest, res: Response) => {
-  await Product.findByIdAndDelete(_req.params.id);
-  res.json({ ok: true });
-});
+router.put('/:id',
+  authMiddleware,
+  adminOnly,
+  upload.single('image'),
+  validateProductData,
+  updateProduct
+);
+
+router.delete('/:id',
+  authMiddleware,
+  adminOnly,
+  deleteProduct
+);
 
 export default router;

@@ -10,11 +10,13 @@
   "scripts": {
     "test": "jest",
     "start": "node dist/index.js",
-    "build": "npm i && npx tsc --noEmit && tsc -p tsconfig.json",
+  "build": "npm i && npx tsc --noEmit && npx tsc -p tsconfig.json",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "seed": "ts-node src/seed/seed.ts"
+    "drop-index": "ts-node src/scripts/dropUsernameIndex.ts",
+    "seed": "concurrently \"ts-node src/index.ts\" \"wait-on tcp:4000 && ts-node src/seed/seed.ts\""
   },
   "dependencies": {
+    "axios": "^1.13.1",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^1.30.0",
     "cors": "^2.8.5",
@@ -38,9 +40,11 @@
     "@types/multer": "^2.0.0",
     "@types/node": "^20.19.24",
     "@types/uuid": "^10.0.0",
+    "concurrently": "^9.2.1",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "wait-on": "^9.0.1"
   }
 }

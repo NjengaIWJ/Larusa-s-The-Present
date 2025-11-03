@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import useCart from '../stores/useCart'
 import { createOrder } from '../api/requests'
-import type { OrderPayload } from '../api/requests'
 import { useNavigate } from 'react-router-dom'
 
 const Cart: React.FC = () => {
@@ -16,8 +15,8 @@ const Cart: React.FC = () => {
   async function doCheckout() {
     setLoading(true)
     try {
-      const payload: OrderPayload = { items: items.map(i => ({ product: i.productId, quantity: i.quantity, price: i.price })), total }
-      await createOrder(payload)
+      const payload = { items: items.map(i => ({ product: i.productId, quantity: i.quantity, price: i.price })), total }
+      await createOrder(payload.items)
       clear()
       navigate('/orders')
     } catch (err: unknown) {

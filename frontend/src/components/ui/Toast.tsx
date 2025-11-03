@@ -12,6 +12,8 @@ export interface ToastProps {
   isVisible?: boolean
 }
 
+
+
 const Toast: React.FC<ToastProps> = ({ 
   message, 
   type = 'info',

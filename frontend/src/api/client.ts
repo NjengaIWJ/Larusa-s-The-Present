@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const baseURL = (import.meta.env && (import.meta.env as any).VITE_API_BASE) || 'http://localhost:4000/api'
+const baseURL = import.meta.env.VITE_API_BASE ?? '/api';
 
 const api = axios.create({
   baseURL,
@@ -13,6 +13,9 @@ api.interceptors.request.use((cfg) => {
     const token = localStorage.getItem('tp_token')
     if (token) (cfg.headers as any) = { ...(cfg.headers || {}), Authorization: `Bearer ${token}` }
   } catch (e) {
+    if (e instanceof Error) {
+      console.error('Failed to attach auth token to request:', e.message)
+    }
     // ignore
   }
   return cfg

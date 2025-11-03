@@ -1,82 +1,260 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { createProduct, getProduct, updateProduct, uploadImage } from '../api/requests'
+import {
+  createProduct,
+  getProduct,
+  updateProduct,
+  uploadImage
+} from '../api/requests'
+import { useToast } from '../stores/useToast'
+
+const ALLOWED_CATEGORIES = [
+  'birthday',
+  'anniversary',
+  'thankyou',
+  'holiday',
+  'love',
+  'general'
+] as const
+
+type Category = typeof ALLOWED_CATEGORIES[number]
+
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string
+    }
+  }
+  message?: string
+}
 
 const AdminProductForm: React.FC = () => {
-  const { id } = useParams()
+  const { id } = useParams<{ id?: string }>()
   const navigate = useNavigate()
-  const [name, setName] = useState('')
-  const [desc, setDesc] = useState('')
+  const { showToast } = useToast()
+
+  const [name, setName] = useState<string>('')
+  const [desc, setDesc] = useState<string>('')
   const [price, setPrice] = useState<number | ''>('')
+  const [category, setCategory] = useState<Category>('general')
   const [images, setImages] = useState<string[]>([])
-  const [uploading, setUploading] = useState(false)
-  const [uploadProgress, setUploadProgress] = useState(0)
 
+  const [uploading, setUploading] = useState<boolean>(false)
+  const [uploadProgress, setUploadProgress] = useState<number>(0)
+
+  // Load existing product if editing
   useEffect(() => {
-    if (id) {
-      getProduct(id).then(p => { setName(p.name); setDesc(p.description || ''); setPrice(p.price); setImages(p.images || []) }).catch(() => {})
+    if (!id) return
+    (async () => {
+      try {
+        const product = await getProduct(id)
+        setName(product.name)
+        setDesc(product.description ?? '')
+        setPrice(product.price)
+        setImages(product.images ?? [])
+        if (product.category && ALLOWED_CATEGORIES.includes(product.category as Category)) {
+          setCategory(product.category as Category)
+        }
+      } catch (error: unknown) {
+        console.error('Failed to load product', error)
+        showToast('Failed to load product')
+      }
+    })()
+  }, [id, showToast])
+
+  const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Frontend validation for image type and size
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    if (!allowedTypes.includes(file.type)) {
+      showToast('Invalid image type. Only JPEG, PNG, GIF, and WebP allowed.')
+      return
     }
-  }, [id])
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('Image too large (max 5MB).')
+      return
+    }
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    try {
-      const payload = { name, description: desc, price: Number(price), images, category: 'general' }
-      if (id) await updateProduct(id, payload)
-      else await createProduct(payload)
-      navigate('/admin/products')
-    } catch (err: unknown) { alert(`Save failed: ${String(err)}`) }
-  }
-
-  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const f = e.target.files?.[0]
-    if (!f) return
     try {
       setUploading(true)
       setUploadProgress(0)
-      const res = await uploadImage(f, (pct) => setUploadProgress(pct))
-      if (res && res.url) setImages((s) => [...s, res.url])
-    } catch { alert('Upload failed') }
-    finally { setUploading(false); setUploadProgress(0) }
-  }
+      const formData = new FormData()
+      formData.append('file', file)
+      const url = await uploadImage(formData, (pct) => {
+        setUploadProgress(pct)
+      })
+      setImages((prev) => [...prev, url])
+      showToast('Image uploaded successfully')
+    } catch (error: unknown) {
+      console.error('Upload image error', error)
+      const apiError = error as ApiError
+      if (apiError.response?.data?.message) {
+        showToast(apiError.response.data.message)
+      } else {
+        showToast('Failed to upload image')
+      }
+    } finally {
+      setUploading(false)
+      setUploadProgress(0)
+    }
+  }, [showToast])
 
-  function removeImage(url: string) {
-    setImages(s => s.filter(u => u !== url))
-  }
+  const removeImage = useCallback((index: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== index))
+  }, [])
+
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!name.trim() || price === '' || price < 0) {
+      showToast('Please fill in all required fields')
+      return
+    }
+    try {
+      const payload = {
+        name: name.trim(),
+        description: desc.trim(),
+        price: Number(price),
+        images,
+        category
+      }
+      if (id) {
+        await updateProduct(id, payload)
+        showToast('Product updated successfully')
+      } else {
+        await createProduct(payload)
+        showToast('Product created successfully')
+      }
+      navigate('/admin/products')
+    } catch (error: unknown) {
+      console.error('Save product error', error)
+      let msg = 'Save failed.'
+      const apiError = error as ApiError
+      if (apiError.response?.data?.message) {
+        msg = apiError.response.data.message
+      } else if (apiError.message) {
+        msg = `Save failed: ${apiError.message}`
+      }
+      showToast(msg)
+    }
+  }, [id, name, desc, price, images, category, navigate, showToast])
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-4">{id ? 'Edit' : 'Create'} Product</h2>
-      <form onSubmit={onSubmit} className="space-y-4 max-w-xl">
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">
+        {id ? 'Edit Product' : 'Create New Product'}
+      </h1>
+
+      <form onSubmit={handleSubmit} className="max-w-xl space-y-4">
         <div>
-          <label className="block text-sm font-medium">Name</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} className="mt-1 block w-full border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2 bg-white dark:bg-gray-900" />
+          <label className="block text-sm font-medium mb-1">Name*</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full p-2 border rounded"
+            required
+          />
         </div>
+
         <div>
-          <label className="block text-sm font-medium">Description</label>
-          <textarea value={desc} onChange={(e) => setDesc(e.target.value)} className="mt-1 block w-full border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2 bg-white dark:bg-gray-900" />
+          <label className="block text-sm font-medium mb-1">Description</label>
+          <textarea
+            value={desc}
+            onChange={(e) => setDesc(e.target.value)}
+            className="w-full p-2 border rounded"
+            rows={4}
+          />
         </div>
+
         <div>
-          <label className="block text-sm font-medium">Price</label>
-          <input type="number" value={price === '' ? '' : price} onChange={(e) => setPrice(e.target.value === '' ? '' : parseFloat(e.target.value))} className="mt-1 block w-44 border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2 bg-white dark:bg-gray-900" />
+          <label className="block text-sm font-medium mb-1">Price*</label>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={price === '' ? '' : price}
+            onChange={(e) =>
+              setPrice(e.target.value ? Number(e.target.value) : '')
+            }
+            className="w-full p-2 border rounded"
+            required
+          />
         </div>
-        <div className="mt-3">
-          <label className="block text-sm font-medium">Images</label>
-          <div className="mt-2 flex items-center gap-3">
-            <input type="file" onChange={onFile} className="" />
-            {uploading && <div className="text-sm text-gray-500">Uploading {uploadProgress}%</div>}
-          </div>
-          <div className="mt-3 flex items-center gap-3">
-            {images.map((u) => (
-              <div key={u} className="relative">
-                <img src={u} className="w-28 h-20 object-cover rounded-md" />
-                <button type="button" onClick={() => removeImage(u)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs">×</button>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Category</label>
+          <select
+            value={category}
+            onChange={(e) =>
+              setCategory(e.target.value as Category)
+            }
+            className="w-full p-2 border rounded"
+          >
+            {ALLOWED_CATEGORIES.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat.charAt(0).toUpperCase() + cat.slice(1)}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Images</label>
+
+          <div className="flex flex-wrap gap-4 mb-2">
+            {images.map((url, index) => (
+              <div key={url} className="relative group w-24 h-24">
+                <img
+                  src={url}
+                  alt={`Product ${index + 1}`}
+                  className="w-full h-full object-cover rounded"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeImage(index)}
+                  className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  ×
+                </button>
               </div>
             ))}
           </div>
+
+          <div className="relative">
+            <input
+              type="file"
+              onChange={handleImageUpload}
+              accept="image/*"
+              disabled={uploading}
+              className="w-full p-2 border rounded"
+            />
+            {uploading && (
+              <div className="absolute inset-0 bg-white/50 flex items-center justify-center">
+                <div className="text-sm">
+                  Uploading… {uploadProgress}%
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-        <div className="pt-2">
-          <button type="submit" className="btn-cta">Save</button>
+
+        <div className="flex gap-4 mt-4">
+          <button
+            type="submit"
+            disabled={uploading}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+          >
+            {id ? 'Update Product' : 'Create Product'}
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/admin/products')}
+            className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+          >
+            Cancel
+          </button>
         </div>
       </form>
     </div>
