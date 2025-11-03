@@ -26,6 +26,7 @@
     "multer": "^2.0.2",
     "passport": "^0.6.0",
     "passport-jwt": "^4.0.1",
+    "uuid": "^13.0.0",
     "winston": "^3.18.3"
   },
   "devDependencies": {
