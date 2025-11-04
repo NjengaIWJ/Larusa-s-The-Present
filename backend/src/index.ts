@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
-import { MONGODB_URI, PORT, ALLOWED_ORIGIN } from './config';
+import { MONGODB_URI, PORT, ALLOWED_ORIGINS } from './config';
 import authRoutes from './routes/auth';
 import productRoutes from './routes/products';
 import orderRoutes from './routes/orders';
@@ -26,7 +26,7 @@ const logEnvSummary = () => {
     logger.info('Environment summary:', {
       NODE_ENV: process.env.NODE_ENV || 'development',
       PORT,
-      ALLOWED_ORIGIN,
+      ALLOWED_ORIGINS,
       MONGODB_URI: mask(MONGODB_URI),
       CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME || '',
       CLOUDINARY_API_KEY: mask(process.env.CLOUDINARY_API_KEY),
@@ -43,9 +43,30 @@ logEnvSummary()
 // When running behind a proxy (Render, Heroku), trust the first proxy so IPs and secure cookies work
 app.set('trust proxy', 1);
 
-// CORS: allow a configured origin (Vercel frontend or other). Fallback to open for dev.
-const corsOptions = ALLOWED_ORIGIN ? { origin: ALLOWED_ORIGIN, optionsSuccessStatus: 200 } : undefined
-logger.info(`CORS allowed origin: ${ALLOWED_ORIGIN || 'any (development mode)'}`);
+// CORS: allow configured origins (Vercel frontend + others). Fallback to open for dev.
+const corsOptions = {
+  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+    // Allow requests with no origin (like mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+    
+    // Check against allowed origins
+    const allowed = ALLOWED_ORIGINS.some(allowed => {
+      // Exact match or wildcard subdomain match
+      return origin === allowed || 
+             (allowed.startsWith('*.') && origin.endsWith(allowed.slice(1)));
+    });
+    
+    if (allowed) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+logger.info('CORS allowed origins:', { origins: ALLOWED_ORIGINS });
 app.use(cors(corsOptions));
 
 // Accept reasonably sized JSON payloads; uploads handled via multer

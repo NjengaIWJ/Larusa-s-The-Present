@@ -18,6 +18,8 @@ export const CLOUDINARY = {
   api_secret: process.env.CLOUDINARY_API_SECRET || ''
 };
 
-// Optional: restrict CORS to a known frontend origin in production
-export const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || process.env.FRONTEND_URL || ''
+// Optional: restrict CORS to known frontend origins in production
+// Allow multiple origins (comma-separated) for multi-environment setups
+const rawOrigins = process.env.ALLOWED_ORIGINS || process.env.FRONTEND_URL || '';
+export const ALLOWED_ORIGINS = rawOrigins.split(',').map(origin => origin.trim()).filter(Boolean);
 
