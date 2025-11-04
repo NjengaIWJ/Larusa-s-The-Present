@@ -1,18 +1,6 @@
 import axios from 'axios';
 
-// Normalize API base: default to '/api'. If a full absolute URL is provided but
-// doesn't include the expected '/api' prefix, append it so endpoints like
-// '/products' map to '<BASE>/api/products' on deployed backends.
-const rawBase = import.meta.env.VITE_API_BASE;
-let baseURL = rawBase ?? '/api';
-if (rawBase && (rawBase.startsWith('http://') || rawBase.startsWith('https://'))) {
-  // Avoid double-slashes and ensure the path ends with '/api' so client requests
-  // to '/products' become '<rawBase>/api/products'. This helps when deployment
-  // env sets the origin but omits the '/api' path.
-  if (!rawBase.replace(/\/+$/, '').endsWith('/api')) {
-    baseURL = rawBase.replace(/\/+$/, '') + '/api';
-  }
-}
+const baseURL = import.meta.env.VITE_API_BASE ?? '/api';
 
 const api = axios.create({
   baseURL,
