@@ -8,6 +8,9 @@ const Cart: React.FC = () => {
   const items = useCart(s => s.items)
   const remove = useCart(s => s.remove)
   const clear = useCart(s => s.clear)
+  const increment = useCart(s => s.increment)
+  const decrement = useCart(s => s.decrement)
+  const maxQty = useCart(s => s.MAX_QUANTITY ?? 99)
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const showToast = useToast(s => s.showToast)
@@ -43,11 +46,16 @@ const Cart: React.FC = () => {
               <div className="flex items-center gap-3">
                 <img src={'https://placehold.co/80x60?text=Item'} alt={i.name} className="w-20 h-14 object-cover rounded-md" />
                 <div>
-                  <div className="font-semibold">{i.name} x {i.quantity}</div>
+                  <div className="font-semibold">{i.name}</div>
                   <div className="text-sm text-gray-500">${(i.price * i.quantity).toFixed(2)}</div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                <div className="flex items-center border rounded-md overflow-hidden bg-gray-50 dark:bg-gray-900">
+                  <button onClick={() => decrement(i.productId)} disabled={i.quantity <= 1} className="px-3 py-1 text-sm">-</button>
+                  <div className="px-3 text-sm font-medium">{i.quantity}</div>
+                  <button onClick={() => increment(i.productId)} disabled={i.quantity >= maxQty} className="px-3 py-1 text-sm">+</button>
+                </div>
                 <button onClick={() => remove(i.productId)} className="text-sm text-red-500">Remove</button>
               </div>
             </div>

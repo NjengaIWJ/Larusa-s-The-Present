@@ -82,6 +82,15 @@
 	@apply inline-block px-3 py-1 rounded-full text-white font-semibold bg-gradient-to-r from-tppink to-tpred;
 }
 
+/* Order card specific tweaks */
+.order-card-compact {
+	@apply bg-white dark:bg-gray-800 border border-transparent dark:border-gray-700 rounded-xl overflow-hidden shadow-sm p-4;
+}
+
+.order-status-badge {
+	@apply inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium;
+}
+
 /* Improve spacing for product grid and container */
 .product-grid-tight { gap: 1.25rem }
 

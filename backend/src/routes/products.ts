@@ -1,6 +1,6 @@
 import express from 'express';
 import multer from 'multer';
-import { authMiddleware, adminOnly } from '../middleware/auth';
+import { requireAuth, authMiddleware, adminOnly } from '../middleware/auth';
 import {
   getAllProducts,
   getProductById,
@@ -34,9 +34,9 @@ const upload = multer({
   }
 });
 
-// Public routes (no authentication required)
-router.get('/', getAllProducts);
-router.get('/:id', getProductById);
+// Public routes (optional authentication: allow guest but populate req.user when present)
+router.get('/', requireAuth({ allowGuest: true }), getAllProducts);
+router.get('/:id', requireAuth({ allowGuest: true }), getProductById);
 
 // Protected admin routes
 router.post('/',

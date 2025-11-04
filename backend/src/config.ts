@@ -1,9 +1,16 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-export const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/the_present';
-export const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_change_me';
-export const PORT = process.env.PORT ? Number(process.env.PORT) : 4000;
+export const MONGODB_URI = process.env.MONGODB_URI as string;
+
+const jwtSecret = process.env.JWT_SECRET;
+if (!jwtSecret) {
+  // Fail fast during application startup if JWT secret is not provided
+  throw new Error('Environment variable JWT_SECRET is required');
+}
+export const JWT_SECRET: string = jwtSecret;
+
+export const PORT = Number(process.env.PORT || 3000);
 
 export const CLOUDINARY = {
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME || '',
@@ -13,3 +20,4 @@ export const CLOUDINARY = {
 
 // Optional: restrict CORS to a known frontend origin in production
 export const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || process.env.FRONTEND_URL || ''
+

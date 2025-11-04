@@ -10,11 +10,42 @@ import logger from './utils/logger';
 
 const app = express();
 
+// Log selected environment configuration at startup (mask sensitive values)
+const mask = (s?: string) => {
+  if (!s) return ''
+  if (s.includes('://')) {
+    // try to mask credentials in a URI (e.g. mongodb://user:pass@host)
+    return s.replace(/(https?:\/\/|mongodb(?:\+srv)?:\/\/)([^@]*?)@/, (m, p1) => `${p1}****@`)
+  }
+  if (s.length <= 4) return '****'
+  return `${s.slice(0, 2)}****${s.slice(-2)}`
+}
+
+const logEnvSummary = () => {
+  try {
+    logger.info('Environment summary:', {
+      NODE_ENV: process.env.NODE_ENV || 'development',
+      PORT,
+      ALLOWED_ORIGIN,
+      MONGODB_URI: mask(MONGODB_URI),
+      CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME || '',
+      CLOUDINARY_API_KEY: mask(process.env.CLOUDINARY_API_KEY),
+      JWT_SECRET: mask(process.env.JWT_SECRET),
+    })
+  } catch (e) {
+    // do not fail startup on logging
+    logger.warn('Failed to log environment summary')
+  }
+}
+
+logEnvSummary()
+
 // When running behind a proxy (Render, Heroku), trust the first proxy so IPs and secure cookies work
 app.set('trust proxy', 1);
 
 // CORS: allow a configured origin (Vercel frontend or other). Fallback to open for dev.
 const corsOptions = ALLOWED_ORIGIN ? { origin: ALLOWED_ORIGIN, optionsSuccessStatus: 200 } : undefined
+logger.info(`CORS allowed origin: ${ALLOWED_ORIGIN || 'any (development mode)'}`);
 app.use(cors(corsOptions));
 
 // Accept reasonably sized JSON payloads; uploads handled via multer

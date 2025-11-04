@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { signToken } from '../utils/jwt';
 import { isValidObjectId } from 'mongoose';
 import User from '../models/User';
 import { JWT_SECRET } from '../config';
@@ -40,11 +41,7 @@ export const registerUser = async (req: Request, res: Response) => {
     });
     await user.save();
 
-    const token = jwt.sign(
-      { id: user._id }, 
-      JWT_SECRET, 
-      { expiresIn: '7d' }
-    );
+    const token = signToken({ id: String(user._id) });
 
     logger.info('User registered successfully', { email, role });
     res.json({ 
@@ -78,11 +75,7 @@ export const loginUser = async (req: Request, res: Response) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    const token = jwt.sign(
-      { id: user._id },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
+    const token = signToken({ id: String(user._id) });
 
     logger.info('User logged in successfully', { email, role: user.role });
     res.json({
