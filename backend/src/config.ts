@@ -10,3 +10,6 @@ export const CLOUDINARY = {
   api_key: process.env.CLOUDINARY_API_KEY || '',
   api_secret: process.env.CLOUDINARY_API_SECRET || ''
 };
+
+// Optional: restrict CORS to a known frontend origin in production
+export const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || process.env.FRONTEND_URL || ''

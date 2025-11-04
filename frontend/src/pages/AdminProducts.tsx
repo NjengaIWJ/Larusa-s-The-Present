@@ -34,8 +34,8 @@ const AdminProducts: React.FC = () => {
 
       <div className="space-y-3">
         {products?.map((product) => {
-          const imageUrl = product.images && product.images.length > 0
-            ? product.images[0]
+          const imageUrl: string = product.images && product.images.length > 0
+            ? product.images[0].url
             : 'https://placehold.co/80x60?text=No'
 
           return (

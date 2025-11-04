@@ -37,7 +37,7 @@ const AdminProductForm: React.FC = () => {
   const [desc, setDesc] = useState<string>('')
   const [price, setPrice] = useState<number | ''>('')
   const [category, setCategory] = useState<Category>('general')
-  const [images, setImages] = useState<string[]>([])
+  const [images, setImages] = useState<{ url: string; publicId?: string }[]>([])
 
   const [uploading, setUploading] = useState<boolean>(false)
   const [uploadProgress, setUploadProgress] = useState<number>(0)
@@ -82,10 +82,11 @@ const AdminProductForm: React.FC = () => {
       setUploadProgress(0)
       const formData = new FormData()
       formData.append('file', file)
-      const url = await uploadImage(formData, (pct) => {
+      const res = await uploadImage(formData, (pct) => {
         setUploadProgress(pct)
       })
-      setImages((prev) => [...prev, url])
+      // uploadImage now returns an object with url and metadata
+      setImages((prev) => [...prev, { url: res.url }])
       showToast('Image uploaded successfully')
     } catch (error: unknown) {
       console.error('Upload image error', error)
@@ -204,10 +205,10 @@ const AdminProductForm: React.FC = () => {
           <label className="block text-sm font-medium mb-1">Images</label>
 
           <div className="flex flex-wrap gap-4 mb-2">
-            {images.map((url, index) => (
-              <div key={url} className="relative group w-24 h-24">
+            {images.map((img, index) => (
+              <div key={img.url} className="relative group w-24 h-24">
                 <img
-                  src={url}
+                  src={img.url}
                   alt={`Product ${index + 1}`}
                   className="w-full h-full object-cover rounded"
                 />

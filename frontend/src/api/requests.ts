@@ -1,12 +1,14 @@
 import api from "./client"
 import type { AxiosProgressEvent } from 'axios'
 
+export type ProductImage = { url: string; publicId?: string }
+
 export type Product = {
   _id: string
   name: string
   description?: string
   price: number
-  images?: string[]
+  images?: ProductImage[]
   category?: string
   createdAt?: string
   updatedAt?: string
@@ -20,7 +22,7 @@ export type RegisterResponse = { token: string; user: UserPayload }
 export const uploadImage = async (
   formData: FormData,
   onProgress?: (progress: number) => void
-): Promise<string> => {
+): Promise<{ url: string; width?: number; height?: number; format?: string }> => {
   const res = await api.post('/upload/image', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
     onUploadProgress: (e: AxiosProgressEvent) => {
@@ -36,7 +38,7 @@ export const uploadImage = async (
       }
     }
   })
-  return res.data.url
+  return res.data
 }
 
 // Products

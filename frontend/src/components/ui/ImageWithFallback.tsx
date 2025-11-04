@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 
 interface Props {
-  src: string
+  src?: string | null
   alt: string
   className?: string
   fallbackSrc?: string
@@ -14,8 +14,12 @@ const ImageWithFallback: React.FC<Props> = ({
   className = '', 
   fallbackSrc = 'https://placehold.co/600x400?text=No+Image' 
 }) => {
+  // If no src provided, we'll immediately use the fallback image
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(false)
+
+  // Ensure we only call string methods on actual strings
+  const effectiveSrc = (typeof src === 'string' && src.trim()) ? src : null
 
   return (
     <div className={`relative ${className}`}>
@@ -25,7 +29,8 @@ const ImageWithFallback: React.FC<Props> = ({
       )}
       
       <motion.img
-        src={error ? fallbackSrc : src}
+        // Avoid passing an empty string to `src` (causes browser to request the document)
+        src={error ? fallbackSrc : (effectiveSrc ?? fallbackSrc)}
         alt={alt}
         className={`${className} transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
         loading="lazy"

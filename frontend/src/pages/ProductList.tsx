@@ -39,20 +39,22 @@ const ProductList: React.FC = () => {
   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 product-grid-tight">
         {data?.map((p: Product) => (
           <motion.div whileHover={{ y: -6 }} key={p._id} className="product-card-custom">
-            <Link to={`/product/${p._id}`} className="block">
+            <Link to={`/product/${p._id}`} className="block h-full">
               <div className="product-card-img-container">
                 <ImageWithFallback
-                  src={p.images && p.images.length ? p.images[0] : ''}
+                  src={p.images?.[0]?.url ?? null}
                   alt={p.name}
                   className="product-card-img"
                 />
               </div>
-              <div className="p-4">
-                <h3 className="text-lg font-semibold text-tpred">{p.name}</h3>
-                <p className="text-sm text-gray-500 mt-1">{p.description}</p>
-                <div className="mt-3 flex items-center justify-between">
-                  <div className="text-lg font-bold text-tpgold">${p.price.toFixed(2)}</div>
-                  <button className="btn-cta">View</button>
+              <div className="p-4 flex-1 flex flex-col justify-between">
+                <div>
+                  <h3 className="text-base md:text-lg font-semibold text-tpred">{p.name}</h3>
+                  <p className="text-sm text-gray-500 mt-1 line-clamp-2">{p.description}</p>
+                </div>
+                <div className="mt-4 flex items-center justify-between">
+                  <div className="text-base md:text-lg font-bold text-tpgold">${p.price.toFixed(2)}</div>
+                  <button className="btn-cta text-sm">View</button>
                 </div>
               </div>
             </Link>
